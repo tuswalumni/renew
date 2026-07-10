@@ -1,27 +1,186 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบต่ออายุสมาชิกสมาคมนักศึกษาเก่าสังคมสงเคราะห์ศาสตร์ มธ.</title><link rel="icon" type="image/png" href="https://img5.pic.in.th/file/secure-sv1/cropped_circle_image09cc9731529109e7.png">
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-        }
-        iframe {
-            display: block;
-            width: 100%;
-            height: 100vh;
-            border: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>ต่ออายุสมาชิก | สมาคมนักศึกษาเก่าสังคมสงเคราะห์ศาสตร์ มธ.</title><link rel="icon" type="image/png" href="https://img5.pic.in.th/file/secure-sv1/cropped_circle_image09cc9731529109e7.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; }
+    .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .hidden { display: none; }
+  </style>
 </head>
-<body>
-    <iframe src="https://script.google.com/macros/s/AKfycbwBqeqG9yu5y-PCKjr5hbgevTuKVjS9oDNbDFCbhxwvj4GX4jDSNEk9tKyOh3qw-J2h/exec?page=renew" 
-            allowfullscreen>
-    </iframe>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+  <nav class="bg-red-800 text-white shadow-lg sticky top-0 z-50">
+    <div class="container mx-auto px-4 flex items-center justify-between h-20">
+      <a href="https://members.tuswalumni.com/" class="flex items-center space-x-3 cursor-pointer">
+        <img src="https://img2.pic.in.th/cropped_circle_image4abd3ce094449065.png" class="w-12 h-12 bg-white rounded-full p-0.5 shadow-md">
+        <div class="leading-tight">
+          <p class="font-bold text-lg hidden md:block uppercase tracking-tight">สมาคมนักศึกษาเก่าสังคมสงเคราะห์ศาสตร์ มธ.</p>
+        </div>
+      </a>
+      <div class="flex space-x-1 md:space-x-2 overflow-x-auto pb-2 md:pb-0">
+        <a href="https://members.tuswalumni.com/" class="flex-shrink-0 flex items-center px-4 py-2 rounded-lg text-red-100 hover:bg-red-700 hover:text-white font-bold transition-all text-sm">หน้าสมัครสมาชิก</a>
+        <a href="https://members.tuswalumni.com/?page=objection" class="flex-shrink-0 flex items-center px-4 py-2 rounded-lg text-red-100 hover:bg-red-700 hover:text-white font-bold transition-all text-sm">ประกาศรายชื่อ</a>
+        <a href="https://members.tuswalumni.com/payment" class="flex-shrink-0 flex items-center px-4 py-2 rounded-lg text-red-100 hover:bg-red-700 hover:text-white font-bold transition-all text-sm">แจ้งชำระเงิน</a>
+        <a href="https://members.tuswalumni.com/memberinfo" class="flex-shrink-0 flex items-center px-4 py-2 rounded-lg text-red-100 hover:bg-red-700 hover:text-white font-bold transition-all text-sm">ข้อมูลสมาชิก</a>
+        <a href="https://members.tuswalumni.com/renew" class="flex-shrink-0 flex items-center px-4 py-2 rounded-lg bg-red-700 text-white font-bold transition-all text-sm">ต่ออายุ</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow container mx-auto px-4 py-12 max-w-4xl">
+    <div id="page-renew" class="animate-fadeIn max-w-5xl mx-auto">
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-extrabold text-emerald-900 uppercase">ระบบต่ออายุสมาชิก</h1>
+        <div class="h-1.5 w-24 bg-emerald-500 mx-auto mt-3 rounded-full shadow-sm"></div>
+        <p class="text-slate-500 mt-4 text-sm font-medium italic">เฉพาะสมาชิกสมทบที่มีสถานะ "หมดอายุ" หรือ "ใกล้หมดอายุ" เท่านั้น</p>
+      </div>
+
+      <div class="max-w-3xl mx-auto space-y-8">
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-8 md:p-10 relative overflow-hidden">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input type="text" id="renewSearchIdCard" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='Enter') searchForRenewOnly()" placeholder="เลขบัตรประชาชน 13 หลัก" class="flex-grow px-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold focus:border-emerald-500 outline-none transition-all shadow-inner">
+            <button onclick="searchForRenewOnly()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl font-black shadow-lg transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
+              <i data-lucide="search" class="w-5 h-5"></i> ตรวจสอบสิทธิ์
+            </button>
+          </div>
+        </div>
+
+        <div id="renewDisplayArea" class="hidden space-y-8 animate-fadeIn">
+          <div id="renewInfo" class="p-6 bg-orange-50 border-2 border-orange-200 rounded-3xl font-bold text-orange-800 shadow-sm animate-fadeIn"></div>
+          
+          <form id="renewForm" class="space-y-8" onsubmit="event.preventDefault();">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-lg border border-slate-100 space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">เบอร์โทรศัพท์ใหม่</label>
+                  <input type="tel" id="renew_phone" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold focus:border-emerald-500 outline-none transition-all">
+                </div>
+                <div>
+                  <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">อีเมลใหม่</label>
+                  <input type="email" id="renew_email" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold focus:border-emerald-500 outline-none transition-all">
+                </div>
+              </div>
+              <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">ที่อยู่ปัจจุบัน (สำหรับจัดส่งบัตร/เอกสาร)</label>
+                <textarea id="renew_address" rows="3" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold focus:border-emerald-500 outline-none transition-all"></textarea>
+              </div>
+            </div>
+
+            <div id="paymentSection" class="bg-white rounded-[2.5rem] shadow-xl border-2 border-emerald-100 overflow-hidden">
+              <div class="bg-emerald-500 px-8 py-5 text-white font-black flex items-center gap-3 shadow-md">
+                <i data-lucide="landmark"></i> ข้อมูลการชำระเงินและแนบหลักฐาน
+              </div>
+              <div class="p-8">
+                <div class="bg-emerald-50 p-6 rounded-3xl mb-8 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left border border-emerald-100">
+                  <div>
+                    <p class="font-bold text-slate-800 uppercase italic leading-tight">ธนาคารกรุงไทย | 021-1-05188-8</p>
+                    <p class="text-xs text-slate-500 uppercase font-bold">สมาคมนักศึกษาเก่าสังคมสงเคราะห์ศาสตร์ มธ.</p>
+                  </div>
+                  <p class="text-3xl font-black text-emerald-700 italic">100.00 บาท</p>
+                </div>
+                
+                <div onclick="document.getElementById('renewSlip').click()" class="cursor-pointer border-4 border-dashed border-emerald-100 rounded-[2rem] p-10 text-center hover:border-emerald-400 transition-all group hover:bg-emerald-50/30">
+                  <input type="file" id="renewSlip" accept="image/*" class="hidden" onchange="previewRenewFile()">
+                  <div id="renewUploadPlaceholder" class="space-y-3">
+                    <i data-lucide="upload-cloud" class="mx-auto w-10 h-10 text-emerald-300 group-hover:text-emerald-500 transition-colors"></i>
+                    <p class="font-black text-slate-700 leading-tight">คลิกเพื่ออัปโหลดสลิปโอนเงิน<br><span class="text-[10px] text-red-500 font-bold italic">(บังคับแนบสลิป)</span></p>
+                  </div>
+                  <div id="renewFileName" class="hidden text-emerald-600 font-black italic flex items-center justify-center gap-2 animate-fadeIn"><i data-lucide="file-check"></i> <span></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-6 flex items-start bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div class="flex items-center h-5 mt-1"><input id="pdpaConsent" type="checkbox" required class="w-5 h-5 text-emerald-600 bg-white border-gray-300 rounded cursor-pointer"></div>
+              <div class="ml-3 text-sm"><label for="pdpaConsent" class="font-medium text-gray-700 cursor-pointer">ข้าพเจ้ายอมรับ <a href="javascript:void(0)" onclick="Swal.fire('นโยบายความเป็นส่วนตัว', 'ข้อมูลของท่านจะถูกเก็บรักษาความลับตาม PDPA', 'info')" class="text-blue-600 font-bold hover:underline">นโยบายความเป็นส่วนตัว</a></label></div>
+            </div>
+
+            <button type="button" onclick="submitRenewal()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-7 rounded-[2.5rem] text-2xl shadow-2xl transition-all transform hover:-translate-y-1.5 active:scale-95 flex items-center justify-center gap-4">
+              <i data-lucide="check-square" class="w-8 h-8"></i> ยืนยันการต่ออายุ
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-gray-900 text-gray-400 py-10 border-t-4 border-yellow-500 text-center mt-auto">
+    <div class="container mx-auto px-4">
+      <p class="text-white font-bold mb-1 tracking-wide uppercase font-black italic">สมาคมนักศึกษาเก่าสังคมสงเคราะห์ศาสตร์ มหาวิทยาลัยธรรมศาสตร์</p>
+      <p class="text-[10px] uppercase font-bold italic opacity-40 tracking-widest">&copy; 2026 TU SOCIAL ADMINISTRATION ALUMNI ASSOCIATION. ALL RIGHTS RESERVED.</p>
+    </div>
+  </footer>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwBqeqG9yu5y-PCKjr5hbgevTuKVjS9oDNbDFCbhxwvj4GX4jDSNEk9tKyOh3qw-J2h/exec";
+    async function callAPI(action, payload = {}) {
+      try {
+        const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow', body: JSON.stringify({ action: action, payload: payload }) });
+        const data = await response.json();
+        if (data.success === false || data.status === "error") throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+        return data;
+      } catch (error) { throw error; }
+    }
+
+    let selectedMemberForRenew = null;
+    window.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+
+    async function searchForRenewOnly() {
+      const id = document.getElementById('renewSearchIdCard').value.trim();
+      if (id.length !== 13) return Swal.fire('เตือน', 'กรุณากรอกเลขบัตรประชาชน 13 หลัก', 'warning');
+      
+      Swal.fire({ title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      try {
+        const res = await callAPI('getMemberDataOnlyExpired', { idCard: id });
+        Swal.close();
+        selectedMemberForRenew = res; 
+        document.getElementById('renewDisplayArea').classList.remove('hidden');
+        document.getElementById('renewInfo').innerHTML = `<div class="flex items-center gap-3"><div class="p-2 bg-white rounded-full shadow-sm"><i data-lucide="user-check" class="w-5 h-5 text-orange-600"></i></div><div><p class="text-sm font-black text-orange-900">พบรายชื่อสมาชิก: ${res.name}</p><p class="text-xs font-bold text-orange-700">สถานะ: ${res.status}</p></div></div>`;
+        document.getElementById('renew_phone').value = res.phone || '';
+        document.getElementById('renew_email').value = res.email || '';
+        document.getElementById('renew_address').value = res.address || '';
+        document.getElementById('renewForm').classList.remove('hidden');
+        document.getElementById('renewDisplayArea').scrollIntoView({ behavior: 'smooth' });
+        lucide.createIcons();
+      } catch (err) {
+        document.getElementById('renewDisplayArea').classList.add('hidden');
+        Swal.fire({ icon: 'info', title: 'ไม่เข้าเงื่อนไข', text: err.message, confirmButtonColor: '#f59e0b' });
+      }
+    }
+
+    function previewRenewFile() {
+      const f = document.getElementById('renewSlip').files[0];
+      if (f) { document.getElementById('renewUploadPlaceholder').classList.add('hidden'); document.getElementById('renewFileName').classList.remove('hidden'); document.getElementById('renewFileName').innerHTML = `<i data-lucide="file-check"></i> <span>ไฟล์สลิป: ${f.name}</span>`; lucide.createIcons(); }
+    }
+
+    function submitRenewal() {
+        const file = document.getElementById('renewSlip').files[0];
+        if (!file) return Swal.fire('เตือน', 'กรุณาแนบหลักฐานสลิปการโอนเงิน', 'warning');
+        if (!document.getElementById('pdpaConsent').checked) return Swal.fire('เตือน', 'กรุณายอมรับเงื่อนไข', 'warning');
+        
+        const reader = new FileReader();
+        reader.onload = async e => {
+          Swal.fire({ title: 'กำลังประมวลผลต่ออายุ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          try {
+              selectedMemberForRenew.phone = document.getElementById('renew_phone').value;
+              selectedMemberForRenew.email = document.getElementById('renew_email').value;
+              selectedMemberForRenew.address = document.getElementById('renew_address').value;
+              selectedMemberForRenew.slip = e.target.result;
+              
+              await callAPI('updateMemberProfile', selectedMemberForRenew);
+              Swal.fire({ icon: 'success', title: 'ต่ออายุสำเร็จ!', text: 'ระบบได้ส่งอีเมลยืนยันและลิงก์บัตรใหม่ให้ท่านแล้ว', confirmButtonText: 'ตกลง', confirmButtonColor: '#1e293b' }).then(() => location.reload());
+          } catch (err) { Swal.fire('ล้มเหลว', err.message, 'error'); }
+        };
+        reader.readAsDataURL(file);
+    }
+  </script>
 </body>
 </html>
