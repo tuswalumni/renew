@@ -61,7 +61,7 @@
         <img src="https://img2.pic.in.th/cropped_circle_image4abd3ce094449065.png" class="w-10 h-10 rounded-full ring-1 ring-line" alt="โลโก้สมาคม">
         <span class="leading-tight">
           <span class="block font-semibold text-[15px] text-ink">สมาคมนักศึกษาเก่าสังคมสงเคราะห์ศาสตร์ มธ.</span>
-          <span class="hidden sm:block text-[11px] tracking-wide text-muted">TU Social Administration Alumni Association</span>
+          <span class="hidden sm:block text-xs tracking-wide text-muted">TU Social Administration Alumni Association</span>
         </span>
       </button>
     </div>
@@ -955,8 +955,21 @@ function submitPayment() {
 
     TUSW_API.call('processMemberPayment', { idCard: idCard, slipBase64: e.target.result }).then(res => {
       btn.disabled = false;
-      if (res.success) {
+      if (res.success && res.pending) {
+        // ⏳ สลิปตรวจอัตโนมัติไม่ผ่าน: ยังไม่มีรหัสสมาชิก/ใบเสร็จ — บอกตรงๆ ว่ารอเจ้าหน้าที่ และเปิดทางแนบสลิปใหม่
         setPaymentStep(3);
+        Swal.fire({
+          icon: 'info', title: 'รับสลิปแล้ว — รอเจ้าหน้าที่ตรวจสอบ',
+          html: `<div class="text-left text-sm leading-relaxed">
+                   <p>${esc(res.message)}</p>
+                   <p class="mt-3 text-muted">หากสลิปไม่ชัดหรือยอดไม่ตรง ท่านสามารถแนบสลิปใหม่ได้เลย</p>
+                 </div>`,
+          showDenyButton: true, confirmButtonText: 'รับทราบ (กลับหน้าหลัก)', denyButtonText: 'แนบสลิปใหม่',
+          confirmButtonColor: '#221c18', denyButtonColor: '#a97c22', allowOutsideClick: false
+        }).then(r => { if (r.isConfirmed) window.top.location.href = HOME_URL; });
+      } else if (res.success) {
+        setPaymentStep(3);
+        const l3 = document.getElementById('step3-label'); if (l3) l3.textContent = 'ออกรหัสสมาชิกแล้ว';
         Swal.fire({
           icon: 'success', title: 'ดำเนินการเสร็จสมบูรณ์',
           html: `<div class="text-center">
@@ -1003,7 +1016,12 @@ function submitRenewal() {
       workplace: selectedMemberForRenew.workplace || "-",
       slip: e.target.result
     }).then(res => {
-      if (res.success) {
+      if (res.success && res.pending) {
+        Swal.fire({
+          icon: 'info', title: 'รับสลิปแล้ว — รอเจ้าหน้าที่ตรวจสอบ', text: res.message,
+          confirmButtonText: 'รับทราบ (กลับหน้าหลัก)', confirmButtonColor: '#221c18', allowOutsideClick: false
+        }).then(() => { window.top.location.href = HOME_URL; });
+      } else if (res.success) {
         Swal.fire({
           icon: 'success', title: 'ดำเนินการเรียบร้อย', text: res.message || 'ระบบได้ส่งอีเมลยืนยันและลิงก์บัตรใหม่ให้ท่านแล้ว',
           confirmButtonText: 'ตกลง (กลับหน้าหลัก)', confirmButtonColor: '#221c18'
