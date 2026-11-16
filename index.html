@@ -889,6 +889,14 @@ function handleFormSubmit(f, ev) {
         document.getElementById('addr_tambon').disabled = true;
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
+    } else if (res.code === 'OLD_MEMBER_FOUND') {
+      // ✅ พบในฐานข้อมูลสมาชิกเก่า (ก่อนปี 2568) → ไม่ต้องสมัครใหม่ พาไปอัปเดตข้อมูลแทน
+      Swal.fire({
+        icon: 'info', title: 'ท่านเป็นสมาชิกเก่าของสมาคมฯ',
+        html: `<p>${esc(res.message)}</p><p class="mt-3 text-sm text-muted">หากท่านไม่เคยเป็นสมาชิกมาก่อน กรุณาติดต่อสมาคมฯ ทาง tu.sw.alumni@gmail.com</p>`,
+        showCancelButton: true, confirmButtonText: 'ไปอัปเดตข้อมูลสมาชิกเก่า', cancelButtonText: 'ปิด',
+        confirmButtonColor: '#221c18'
+      }).then(r => { if (r.isConfirmed) window.top.location.href = res.updateUrl || UPDATE_MEMBER_URL; });
     } else {
       Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message, confirmButtonColor: '#7d1f22' });
     }
