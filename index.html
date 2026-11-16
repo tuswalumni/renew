@@ -7,39 +7,20 @@
   <link rel="icon" type="image/png" href="https://img2.pic.in.th/cropped_circle_image4abd3ce094449065.png">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { theme: { extend: {
-      colors: {
-        brand: { 50:'#fbf3f2', 100:'#f5e1df', 200:'#e9c2be', 600:'#9a2a2c', 700:'#7d1f22', 800:'#621719', 900:'#45100f' },
-        gold:  { 50:'#fbf6ea', 100:'#f6ecd6', 300:'#e2c27f', 400:'#d4a84b', 600:'#a97c22', 700:'#8a6418' },
-        paper:'#f6f3ee', line:'#e6dfd5', ink:'#221c18', muted:'#6e655d'
-      },
-      fontFamily: { sans: ['"IBM Plex Sans Thai"', 'Sarabun', 'sans-serif'] }
-    } } };
-  </script>
-  <style type="text/tailwindcss">
-    @layer components {
-      .field { @apply w-full rounded-lg border border-line bg-white px-3.5 py-3 text-[15px] text-ink placeholder:text-muted/50 outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10 disabled:bg-paper disabled:text-muted disabled:cursor-not-allowed; }
-      .label { @apply block text-sm font-medium text-ink mb-1.5; }
-      .hint  { @apply text-xs text-muted mt-1.5; }
-      .card  { @apply bg-white rounded-2xl border border-line shadow-[0_1px_2px_rgba(34,28,24,.04),0_12px_32px_-16px_rgba(34,28,24,.10)]; }
-      .card-head { @apply flex items-center gap-3 px-5 md:px-7 py-4 border-b border-line; }
-      .card-body { @apply px-5 md:px-7 py-6; }
-      .num { @apply flex-shrink-0 w-7 h-7 rounded-full bg-brand-50 text-brand-700 text-sm font-semibold flex items-center justify-center; }
-      .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 font-semibold transition active:scale-[.98] disabled:opacity-60; }
-      .btn-primary { @apply btn bg-brand-700 text-white hover:bg-brand-800 shadow-sm; }
-      .btn-dark { @apply btn bg-ink text-white hover:bg-black; }
-      .btn-outline { @apply btn border border-line bg-white text-ink hover:bg-paper; }
-      .eyebrow { @apply text-[13px] font-semibold text-gold-700; }
-      .tab { @apply flex-shrink-0 flex items-center gap-2 px-3 md:px-4 py-3 text-sm font-medium text-muted hover:text-ink border-b-2 border-transparent transition whitespace-nowrap; }
-      .tab.is-active { @apply text-brand-700 border-brand-700 font-semibold; }
-      .chip { @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold; }
-      .drop { @apply cursor-pointer border-2 border-dashed border-line rounded-xl p-8 text-center hover:border-brand-600 hover:bg-brand-50/40 transition; }
-    }
-  </style>
   <style>
+    html { scroll-padding-top: 140px; }
     body { -webkit-font-smoothing: antialiased; }
+    /* [UX] เครื่องหมาย * สำหรับช่องบังคับกรอก (เดิมมีคลาส .req แต่ไม่มี style จึงไม่แสดง) */
+    .label.req::after { content: " *"; color: #9a2a2c; font-weight: 600; }
+    /* [A11y] focus ring ที่มองเห็นได้สำหรับผู้ใช้คีย์บอร์ด */
+    a:focus-visible, button:focus-visible, [role="button"]:focus-visible, summary:focus-visible, input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible {
+      outline: 3px solid #d4a84b; outline-offset: 2px; border-radius: 8px;
+    }
+    .skip-link { position: absolute; left: 12px; top: -60px; z-index: 100; background: #221c18; color: #fff !important; padding: 10px 16px; border-radius: 10px; font-weight: 600; transition: top .15s; }
+    .skip-link:focus { top: 12px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
     h1, h2, h3 { text-wrap: balance; }
     p { text-wrap: pretty; }
     .hidden { display: none; }
@@ -50,9 +31,12 @@
     a { color: #7d1f22; } a:hover { color: #45100f; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@1.73.0/dist/umd/lucide.min.js"></script>
+  <!-- Tailwind (prebuilt) — วางท้าย <head> ให้ลำดับ cascade เหมือน Play CDN เดิม -->
+  <link rel="stylesheet" href="styles.css?v=20261116">
 </head>
 <body class="bg-paper text-ink font-sans flex flex-col min-h-screen">
+  <a href="#main" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 
   <header class="bg-white border-b border-line sticky top-0 z-50">
     <div class="h-1 bg-brand-700"></div>
@@ -71,10 +55,14 @@
       <button onclick="switchPage('payment')" id="nav-pay" class="tab"><i data-lucide="wallet" class="w-4 h-4"></i> แจ้งชำระเงิน</button>
       <button onclick="switchPage('member_info')" id="nav-info" class="tab"><i data-lucide="user-round-search" class="w-4 h-4"></i> ข้อมูลสมาชิก</button>
       <button onclick="switchPage('renew')" id="nav-renew" class="tab"><i data-lucide="refresh-ccw" class="w-4 h-4"></i> ต่ออายุ</button>
+      <!-- [NEW] ทางเข้าระบบอัปเดตข้อมูลสมาชิกเก่า (UpdateMember) -->
+      <a href="https://updatemember.tuswalumni.com/" target="_top" id="nav-update" class="tab-ext ml-auto no-underline" title="สำหรับสมาชิกที่สมัครก่อนปี 2568 — เปิดระบบอัปเดตข้อมูลสมาชิกเก่า">
+        <i data-lucide="user-pen" class="w-4 h-4"></i> อัปเดตข้อมูลสมาชิกเก่า <i data-lucide="arrow-up-right" class="w-3.5 h-3.5" aria-hidden="true"></i>
+      </a>
     </nav>
   </header>
 
-<main class="flex-grow w-full max-w-6xl mx-auto px-4 py-8 md:py-12">
+<main id="main" tabindex="-1" class="flex-grow w-full max-w-6xl mx-auto px-4 py-8 md:py-12 outline-none">
 
   <!-- ================= REGISTRATION ================= -->
   <div id="page-registration" class="animate-fadeIn max-w-4xl mx-auto">
@@ -91,10 +79,26 @@
       <li class="flex items-center gap-2.5 bg-white border border-line rounded-xl px-3.5 py-3"><span class="num">4</span><span class="text-muted">รับบัตรสมาชิก</span></li>
     </ol>
 
-    <form id="memberForm" class="space-y-6" onsubmit="handleFormSubmit(this)">
+    <!-- [NEW] แยกทางให้สมาชิกเก่า: ไปอัปเดตข้อมูลแทนการสมัครซ้ำ -->
+    <aside aria-labelledby="oldMemberTitle" class="mb-8 rounded-2xl border border-gold-300 bg-gold-50 p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+      <div class="flex items-start gap-4 flex-1">
+        <div class="flex-shrink-0 w-11 h-11 rounded-xl bg-white ring-1 ring-gold-300 flex items-center justify-center">
+          <i data-lucide="user-pen" class="w-5 h-5 text-gold-700" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h2 id="oldMemberTitle" class="font-semibold text-lg text-ink">เป็นสมาชิกสมาคมฯ อยู่แล้ว? ไม่ต้องสมัครใหม่</h2>
+          <p class="text-sm text-ink/80 mt-1 leading-relaxed">สมาชิกที่สมัครไว้ <b>ก่อนปี 2568</b> กรุณาค้นหาชื่อและยืนยัน/อัปเดตข้อมูลในระบบสมาชิกเก่า ระบบจะออกรหัสสมาชิกใหม่ให้ทางอีเมล</p>
+        </div>
+      </div>
+      <a href="https://updatemember.tuswalumni.com/" target="_top" class="btn-dark no-underline !text-white hover:!text-white flex-shrink-0 w-full md:w-auto">
+        <i data-lucide="arrow-right-circle" class="w-5 h-5" aria-hidden="true"></i> อัปเดตข้อมูลสมาชิกเก่า
+      </a>
+    </aside>
+
+    <form id="memberForm" class="space-y-6" onsubmit="handleFormSubmit(this, event)">
       <section class="card">
-        <div class="card-head"><span class="num">01</span><h2 class="font-semibold text-lg">เลือกประเภทสมาชิก</h2></div>
-        <div class="card-body grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card-head"><span class="num">01</span><h2 id="memberTypeTitle" class="font-semibold text-lg">เลือกประเภทสมาชิก <span class="text-brand-600" aria-hidden="true">*</span></h2></div>
+        <div role="radiogroup" aria-labelledby="memberTypeTitle" class="card-body grid grid-cols-1 md:grid-cols-2 gap-4">
           <label class="relative flex items-start gap-4 p-5 rounded-xl border-2 border-line cursor-pointer transition hover:border-brand-200 has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50/50">
             <input type="radio" name="memberType" value="สามัญ" class="mt-1 w-5 h-5 accent-[#7d1f22]" required>
             <span>
@@ -119,41 +123,42 @@
         <div class="card-body space-y-5">
           <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div class="md:col-span-1">
-              <label class="label req">คำนำหน้า</label>
-              <select name="title" class="field" required>
+              <label class="label req" for="reg_title">คำนำหน้า</label>
+              <select id="reg_title" name="title" autocomplete="honorific-prefix" class="field" required>
                 <option value="นาย">นาย</option><option value="นาง">นาง</option><option value="นางสาว">นางสาว</option><option value="คุณ">คุณ</option>
               </select>
             </div>
             <div class="md:col-span-2">
-              <label class="label req">ชื่อจริง (ไทย)</label>
-              <input type="text" name="fname" placeholder="กรอกชื่อ" class="field" required>
+              <label class="label req" for="reg_fname">ชื่อจริง (ไทย)</label>
+              <input type="text" id="reg_fname" name="fname" autocomplete="given-name" placeholder="กรอกชื่อ" class="field" required>
             </div>
             <div class="md:col-span-3">
-              <label class="label req">นามสกุล (ไทย)</label>
-              <input type="text" name="lname" placeholder="กรอกนามสกุล" class="field" required>
+              <label class="label req" for="reg_lname">นามสกุล (ไทย)</label>
+              <input type="text" id="reg_lname" name="lname" autocomplete="family-name" placeholder="กรอกนามสกุล" class="field" required>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div><label class="label">ชื่อเล่น</label><input type="text" name="nname" placeholder="ถ้ามี" class="field"></div>
-            <div><label class="label req">วัน/เดือน/ปีเกิด</label><input type="date" name="dob" class="field" required></div>
+            <div><label class="label" for="reg_nname">ชื่อเล่น</label><input type="text" id="reg_nname" name="nname" autocomplete="nickname" placeholder="ถ้ามี" class="field"></div>
+            <div><label class="label req" for="reg_dob">วัน/เดือน/ปีเกิด</label><input type="date" id="reg_dob" name="dob" autocomplete="bday" class="field" required></div>
             <div>
-              <label class="label req">เลขประจำตัวประชาชน (13 หลัก)</label>
-              <input type="text" name="idCard" inputmode="numeric" maxlength="13" minlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="เฉพาะตัวเลข" class="field font-mono tracking-wider !bg-gold-50 !border-gold-300" required>
+              <label class="label req" for="reg_idCard">เลขประจำตัวประชาชน (13 หลัก)</label>
+              <input type="text" id="reg_idCard" name="idCard" autocomplete="off" inputmode="numeric" maxlength="13" minlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="เฉพาะตัวเลข" class="field font-mono tracking-wider !bg-gold-50 !border-gold-300" required>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label class="label req">หมายเลขโทรศัพท์</label><input type="tel" name="phone" inputmode="numeric" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="0XXXXXXXXX" class="field" required></div>
-            <div><label class="label req">อีเมล (Email)</label><input type="email" name="email" placeholder="example@alumni.com" class="field" required></div>
+            <div><label class="label req" for="reg_phone">หมายเลขโทรศัพท์</label><input type="tel" id="reg_phone" name="phone" autocomplete="tel-national" inputmode="numeric" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="0XXXXXXXXX" class="field" required></div>
+            <div><label class="label req" for="reg_email">อีเมล (Email)</label><input type="email" id="reg_email" name="email" autocomplete="email" placeholder="example@alumni.com" class="field" required></div>
           </div>
 
           <div class="pt-5 border-t border-line space-y-4">
             <p class="flex items-center gap-2 text-sm font-semibold"><i data-lucide="map-pin" class="w-4 h-4 text-brand-700"></i> ที่อยู่สำหรับติดต่อ / จัดส่งเอกสาร</p>
-            <input type="text" name="addr_main" placeholder="บ้านเลขที่, หมู่บ้าน, อาคาร/ชั้น, ซอย, ถนน" class="field" required>
+            <label class="label req" for="reg_addr_main">ที่อยู่ (บ้านเลขที่ / ถนน)</label>
+            <input type="text" id="reg_addr_main" name="addr_main" autocomplete="address-line1" placeholder="บ้านเลขที่, หมู่บ้าน, อาคาร/ชั้น, ซอย, ถนน" class="field" required>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <select id="addr_province" name="addr_province" onchange="updateAmphure()" class="field" required><option value="">เลือกจังหวัด</option></select>
-              <select id="addr_amphure" name="addr_district" onchange="updateTambon()" class="field" required disabled><option value="">เลือกอำเภอ/เขต</option></select>
-              <select id="addr_tambon" name="addr_subdistrict" onchange="updateZipcode()" class="field" required disabled><option value="">เลือกตำบล/แขวง</option></select>
-              <input type="text" name="addr_zipcode" id="addr_zipcode" placeholder="รหัสไปรษณีย์ (อัตโนมัติ)" readonly class="field !bg-paper cursor-not-allowed">
+              <div><label class="label req" for="addr_province">จังหวัด</label><select id="addr_province" name="addr_province" onchange="updateAmphure()" class="field" required><option value="">เลือกจังหวัด</option></select></div>
+              <div><label class="label req" for="addr_amphure">อำเภอ/เขต</label><select id="addr_amphure" name="addr_district" onchange="updateTambon()" class="field" required disabled><option value="">เลือกอำเภอ/เขต</option></select></div>
+              <div><label class="label req" for="addr_tambon">ตำบล/แขวง</label><select id="addr_tambon" name="addr_subdistrict" onchange="updateZipcode()" class="field" required disabled><option value="">เลือกตำบล/แขวง</option></select></div>
+              <div><label class="label" for="addr_zipcode">รหัสไปรษณีย์</label><input type="text" name="addr_zipcode" id="addr_zipcode" autocomplete="postal-code" placeholder="รหัสไปรษณีย์ (อัตโนมัติ)" readonly class="field !bg-paper cursor-not-allowed"></div>
             </div>
           </div>
         </div>
@@ -170,9 +175,9 @@
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div><label class="label">รหัสนักศึกษา (ป.ตรี)</label><input type="text" name="idBachelor" class="field font-mono" placeholder="ระบุรหัส 10 หลัก"></div>
-            <div><label class="label">รหัสนักศึกษา (ป.โท)</label><input type="text" name="idMaster" class="field font-mono" placeholder="ระบุรหัส 10 หลัก"></div>
-            <div><label class="label">รหัสนักศึกษา (ป.เอก)</label><input type="text" name="idPhD" class="field font-mono" placeholder="ระบุรหัส 10 หลัก"></div>
+            <div><label class="label" for="reg_idBachelor">รหัสนักศึกษา (ป.ตรี)</label><input type="text" id="reg_idBachelor" name="idBachelor" inputmode="numeric" class="field font-mono" placeholder="ระบุรหัส 10 หลัก"></div>
+            <div><label class="label" for="reg_idMaster">รหัสนักศึกษา (ป.โท)</label><input type="text" id="reg_idMaster" name="idMaster" inputmode="numeric" class="field font-mono" placeholder="ระบุรหัส 10 หลัก"></div>
+            <div><label class="label" for="reg_idPhD">รหัสนักศึกษา (ป.เอก)</label><input type="text" id="reg_idPhD" name="idPhD" inputmode="numeric" class="field font-mono" placeholder="ระบุรหัส 10 หลัก"></div>
           </div>
         </div>
       </section>
@@ -180,9 +185,9 @@
       <section class="card">
         <div class="card-head"><span class="num">04</span><h2 class="font-semibold text-lg">ข้อมูลอาชีพและตำแหน่งงาน</h2></div>
         <div class="card-body grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div><label class="label req">อาชีพปัจจุบัน</label><input type="text" name="job" placeholder="เช่น ข้าราชการ, พนักงานบริษัท" class="field" required></div>
-          <div><label class="label req">ตำแหน่ง</label><input type="text" name="position" placeholder="ระบุตำแหน่งงาน" class="field" required></div>
-          <div><label class="label req">สถานที่ทำงาน/หน่วยงาน</label><input type="text" name="workplace" placeholder="ระบุหน่วยงาน" class="field" required></div>
+          <div><label class="label req" for="reg_job">อาชีพปัจจุบัน</label><input type="text" id="reg_job" name="job" placeholder="เช่น ข้าราชการ, พนักงานบริษัท" class="field" required></div>
+          <div><label class="label req" for="reg_position">ตำแหน่ง</label><input type="text" id="reg_position" name="position" autocomplete="organization-title" placeholder="ระบุตำแหน่งงาน" class="field" required></div>
+          <div><label class="label req" for="reg_workplace">สถานที่ทำงาน/หน่วยงาน</label><input type="text" id="reg_workplace" name="workplace" autocomplete="organization" placeholder="ระบุหน่วยงาน" class="field" required></div>
         </div>
       </section>
 
@@ -190,8 +195,8 @@
         <div class="card-head !border-gold-100 bg-gold-50/60 rounded-t-2xl"><span class="num !bg-gold-100 !text-gold-700">05</span><h2 class="font-semibold text-lg">สมาชิกสามัญผู้รับรองการสมัคร</h2></div>
         <div class="card-body space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div class="md:col-span-4"><label class="label req">เลขที่สมาชิกผู้รับรอง</label><input type="text" name="endorser_id" placeholder="ORD-XXX" class="field font-mono text-center" required></div>
-            <div class="md:col-span-8"><label class="label req">ชื่อ-นามสกุล ผู้รับรอง</label><input type="text" name="endorser" placeholder="พิมพ์ชื่อจริง และนามสกุล" class="field" required></div>
+            <div class="md:col-span-4"><label class="label req" for="reg_endorser_id">เลขที่สมาชิกผู้รับรอง</label><input type="text" id="reg_endorser_id" name="endorser_id" placeholder="ORD-XXX" class="field font-mono text-center" required></div>
+            <div class="md:col-span-8"><label class="label req" for="reg_endorser">ชื่อ-นามสกุล ผู้รับรอง</label><input type="text" id="reg_endorser" name="endorser" placeholder="พิมพ์ชื่อจริง และนามสกุล" class="field" required></div>
           </div>
           <div class="text-sm text-muted space-y-1">
             <p>ตามข้อบังคับสมาคมฯ ผู้สมัครใหม่ต้องมีสมาชิกสามัญรับรองอย่างน้อย 1 ท่าน เพื่อตรวจสอบคุณสมบัติ</p>
@@ -281,7 +286,7 @@
           <p class="text-xs text-brand-100">เลขที่บัญชี</p>
           <div class="flex items-center gap-3 mt-1 mb-7">
             <p class="text-3xl md:text-[34px] font-semibold font-mono tracking-tight">021-1-05188-8</p>
-            <button type="button" onclick="copyAccountNo(this)" class="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold bg-white/10 hover:bg-white/20 rounded-md px-2 py-1.5 transition"><i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอก</button>
+            <button type="button" onclick="copyAccountNo(this)" aria-live="polite" aria-label="คัดลอกเลขที่บัญชี 021-1-05188-8" class="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold bg-white/10 hover:bg-white/20 rounded-md px-2 py-1.5 transition"><i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอก</button>
           </div>
           <div class="space-y-3 border-t border-white/15 pt-5">
             <div><p class="text-xs text-brand-100">ชื่อบัญชี</p><p class="font-semibold">สมาคมนักศึกษาเก่าสังคมสงเคราะห์ศาสตร์ มธ.</p></div>
@@ -308,7 +313,7 @@
               <div class="flex flex-col sm:flex-row gap-3">
                 <div class="relative flex-grow">
                   <i data-lucide="fingerprint" class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"></i>
-                  <input type="text" id="payIdCard" inputmode="numeric" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='Enter') searchMember()" placeholder="เลขบัตรประชาชน 13 หลัก" class="field !pl-11 font-mono tracking-wider">
+                  <input type="text" id="payIdCard" aria-label="เลขประจำตัวประชาชน 13 หลัก" autocomplete="off" inputmode="numeric" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='Enter') searchMember()" placeholder="เลขบัตรประชาชน 13 หลัก" class="field !pl-11 font-mono tracking-wider">
                 </div>
                 <button type="button" onclick="searchMember()" class="btn-primary"><i data-lucide="search" class="w-4 h-4"></i> ค้นหา</button>
               </div>
@@ -318,7 +323,7 @@
             <div id="paymentArea" class="hidden space-y-5 animate-fadeIn pt-6 border-t border-line">
               <label class="flex items-center gap-2 text-sm font-semibold"><span class="num">2</span> แนบรูปภาพหลักฐานการโอนเงิน (สลิป)</label>
               <input type="file" id="slipFile" accept="image/*" class="hidden" onchange="previewFile()">
-              <div onclick="document.getElementById('slipFile').click()" class="drop">
+              <div onclick="document.getElementById('slipFile').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" role="button" tabindex="0" aria-label="เลือกไฟล์รูปภาพสลิปการโอนเงิน" class="drop">
                 <div id="uploadPlaceholder" class="space-y-3">
                   <div class="mx-auto w-12 h-12 bg-paper rounded-xl flex items-center justify-center"><i data-lucide="image-plus" class="w-6 h-6 text-muted"></i></div>
                   <p class="font-semibold">คลิกเพื่อเลือกไฟล์รูปภาพสลิป</p>
@@ -345,15 +350,16 @@
       <div class="flex flex-col sm:flex-row gap-3">
         <div class="relative flex-grow">
           <i data-lucide="credit-card" class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"></i>
-          <input type="text" id="infoSearchId" inputmode="numeric" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='Enter') searchMemberInfo()" placeholder="เลขประจำตัวประชาชน (ไม่ต้องใส่ขีด)" class="field !pl-11 font-mono tracking-wider">
+          <input type="text" id="infoSearchId" aria-label="เลขประจำตัวประชาชน 13 หลัก" autocomplete="off" inputmode="numeric" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='Enter') searchMemberInfo()" placeholder="เลขประจำตัวประชาชน (ไม่ต้องใส่ขีด)" class="field !pl-11 font-mono tracking-wider">
         </div>
-        <button onclick="searchMemberInfo()" class="btn-primary"><i data-lucide="search" class="w-4 h-4"></i> ค้นหา</button>
+        <button type="button" onclick="searchMemberInfo()" class="btn-primary"><i data-lucide="search" class="w-4 h-4"></i> ค้นหา</button>
       </div>
       <div class="mt-5 flex flex-wrap gap-2 text-xs text-muted">
         <span class="chip bg-paper"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i> เช็คสถานะ</span>
         <span class="chip bg-paper"><i data-lucide="calendar" class="w-3.5 h-3.5 text-gold-600"></i> ดูวันหมดอายุ</span>
         <span class="chip bg-paper"><i data-lucide="user-cog" class="w-3.5 h-3.5 text-brand-700"></i> ปรับปรุงข้อมูลส่วนตัว</span>
       </div>
+      <p class="mt-4 pt-4 border-t border-line text-sm text-muted">สมัครสมาชิกก่อนปี 2568 และค้นหาไม่พบ? <a href="https://updatemember.tuswalumni.com/" target="_top" class="font-semibold underline underline-offset-2">อัปเดตข้อมูลสมาชิกเก่าที่นี่</a></p>
     </div>
     <div id="infoDisplayArea" class="hidden space-y-6 animate-fadeIn mt-6">
       <div id="statusSummaryCard" class="card p-5 md:p-7"></div>
@@ -371,8 +377,8 @@
     <div class="space-y-6">
       <div class="card p-5 md:p-7">
         <div class="flex flex-col sm:flex-row gap-3">
-          <input type="text" id="renewSearchIdCard" inputmode="numeric" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='Enter') searchForRenewOnly()" placeholder="เลขบัตรประชาชน 13 หลัก" class="field flex-grow font-mono tracking-wider">
-          <button onclick="searchForRenewOnly()" class="btn-primary"><i data-lucide="search" class="w-4 h-4"></i> ตรวจสอบสิทธิ์</button>
+          <input type="text" id="renewSearchIdCard" aria-label="เลขประจำตัวประชาชน 13 หลัก" autocomplete="off" inputmode="numeric" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeydown="if(event.key==='Enter') searchForRenewOnly()" placeholder="เลขบัตรประชาชน 13 หลัก" class="field flex-grow font-mono tracking-wider">
+          <button type="button" onclick="searchForRenewOnly()" class="btn-primary"><i data-lucide="search" class="w-4 h-4"></i> ตรวจสอบสิทธิ์</button>
         </div>
       </div>
 
@@ -383,8 +389,8 @@
             <div class="card-head"><span class="num">1</span><h2 class="font-semibold">ตรวจสอบข้อมูลติดต่อ</h2></div>
             <div class="card-body space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label class="label" for="renew_phone">เบอร์โทรศัพท์ใหม่</label><input type="tel" id="renew_phone" inputmode="numeric" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="field"></div>
-                <div><label class="label" for="renew_email">อีเมลใหม่</label><input type="email" id="renew_email" class="field"></div>
+                <div><label class="label" for="renew_phone">เบอร์โทรศัพท์ใหม่</label><input type="tel" id="renew_phone" autocomplete="tel-national" inputmode="numeric" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="field"></div>
+                <div><label class="label" for="renew_email">อีเมลใหม่</label><input type="email" id="renew_email" autocomplete="email" class="field"></div>
               </div>
               <div><label class="label" for="renew_address">ที่อยู่ปัจจุบัน (สำหรับจัดส่งบัตร/เอกสาร)</label><textarea id="renew_address" rows="3" class="field"></textarea></div>
             </div>
@@ -400,7 +406,7 @@
                 </div>
                 <p class="text-2xl font-semibold">100.00 <span class="text-base font-normal text-brand-100">บาท</span></p>
               </div>
-              <div onclick="document.getElementById('renewSlip').click()" class="drop">
+              <div onclick="document.getElementById('renewSlip').click()" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click();}" role="button" tabindex="0" aria-label="อัปโหลดสลิปโอนเงินสำหรับต่ออายุ" class="drop">
                 <input type="file" id="renewSlip" accept="image/*" class="hidden" onchange="previewRenewFile()">
                 <div id="renewUploadPlaceholder" class="space-y-2">
                   <i data-lucide="upload-cloud" class="mx-auto w-8 h-8 text-muted"></i>
@@ -434,7 +440,10 @@
           <p class="text-xs">&copy; 2026 TU Social Administration Alumni Association</p>
         </div>
       </div>
-      <a href="mailto:tu.sw.alumni@gmail.com" class="!text-white/70 hover:!text-white text-sm">tu.sw.alumni@gmail.com</a>
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-5">
+        <a href="https://updatemember.tuswalumni.com/" target="_top" class="!text-gold-300 hover:!text-white text-sm inline-flex items-center gap-1.5"><i data-lucide="user-pen" class="w-4 h-4" aria-hidden="true"></i> อัปเดตข้อมูลสมาชิกเก่า</a>
+        <a href="mailto:tu.sw.alumni@gmail.com" class="!text-white/70 hover:!text-white text-sm">tu.sw.alumni@gmail.com</a>
+      </div>
     </div>
   </footer>
 
@@ -443,6 +452,8 @@
     // URL ของเว็บไซต์หลัก (หน้า Registration/Objection) — ใช้ตอนกดปุ่ม "กลับหน้าหลัก"
     const HOME_URL = "https://members.tuswalumni.com/";
     const MAX_SLIP_MB = 5;
+    // ระบบอัปเดตข้อมูลสมาชิกเก่า (ก่อนปี 2568)
+    const UPDATE_MEMBER_URL = "https://updatemember.tuswalumni.com/";
 
     let allProvinces = [], allDistricts = [], allSubDistricts = [];
     let selectedMember = null, selectedMemberForRenew = null;
@@ -628,7 +639,12 @@ function searchMemberInfo() {
       scrollToEl(document.getElementById('infoDisplayArea'));
     } else {
       document.getElementById('infoDisplayArea').classList.add('hidden');
-      Swal.fire('ไม่พบข้อมูล', res.message, 'error');
+      Swal.fire({
+        icon: 'error', title: 'ไม่พบข้อมูล',
+        html: `<p>${esc(res.message)}</p><p class="mt-3 text-sm text-muted">หากท่านเป็นสมาชิกที่สมัครก่อนปี 2568 ข้อมูลอาจยังอยู่ในฐานข้อมูลเดิม</p>`,
+        showCancelButton: true, confirmButtonText: 'อัปเดตข้อมูลสมาชิกเก่า', cancelButtonText: 'ปิด',
+        confirmButtonColor: '#221c18'
+      }).then(r => { if (r.isConfirmed) window.top.location.href = UPDATE_MEMBER_URL; });
     }
   }).catch(err => { Swal.close(); Swal.fire('เกิดข้อผิดพลาด', err.message, 'error'); });
 }
@@ -673,7 +689,7 @@ function renderInfoForm(m) {
   document.getElementById('statusSummaryCard').innerHTML = `
     <div class="flex flex-col items-center">
       <p class="text-sm text-muted mb-4">บัตรสมาชิกดิจิทัลของท่าน</p>
-      <canvas id="infoMemberCardCanvas" width="600" height="350" class="w-full max-w-md rounded-[18px] shadow-[0_20px_40px_-16px_rgba(34,28,24,.45)]"></canvas>
+      <canvas id="infoMemberCardCanvas" width="600" height="350" role="img" aria-label="บัตรสมาชิกดิจิทัลของ ${esc(m.name)} รหัส ${esc(m.id)}" class="w-full max-w-md rounded-[18px] shadow-[0_20px_40px_-16px_rgba(34,28,24,.45)]"></canvas>
       <button onclick="downloadInfoCard()" class="btn-dark !py-2.5 text-sm mt-5"><i data-lucide="download" class="w-4 h-4"></i> บันทึกรูปภาพ</button>
     </div>
     <div class="mt-7 pt-6 border-t border-line">
@@ -690,7 +706,7 @@ function renderInfoForm(m) {
       </div>
       <dl class="grid grid-cols-2 gap-4 mt-5 bg-paper rounded-xl p-4">
         <div><dt class="text-xs text-muted">วันที่สมัคร</dt><dd class="font-semibold tabular-nums">${esc(m.startDate)}</dd></div>
-        <div class="text-right"><dt class="text-xs text-muted">วันหมดอายุ</dt><dd class="font-semibold tabular-nums text-emerald-700">${esc(m.expiryDate)}</dd></div>
+        <div class="text-right"><dt class="text-xs text-muted">วันหมดอายุ</dt><dd class="font-semibold tabular-nums ${m.status === 'หมดอายุ' ? 'text-rose-700' : (m.status === 'สมาชิกสมบูรณ์' ? 'text-emerald-700' : 'text-amber-800')}">${esc(m.expiryDate)}</dd></div>
       </dl>
     </div>`;
 
@@ -699,8 +715,8 @@ function renderInfoForm(m) {
       <div class="card-head"><i data-lucide="user-cog" class="w-5 h-5 text-brand-700"></i><h3 class="font-semibold">ปรับปรุงข้อมูลส่วนตัว</h3></div>
       <div class="card-body space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="label" for="upd_phone">เบอร์โทรศัพท์</label><input type="tel" id="upd_phone" value="${esc(m.phone)}" class="field"></div>
-          <div><label class="label" for="upd_email">อีเมล (Email)</label><input type="email" id="upd_email" value="${esc(m.email)}" class="field"></div>
+          <div><label class="label" for="upd_phone">เบอร์โทรศัพท์</label><input type="tel" id="upd_phone" inputmode="numeric" autocomplete="tel-national" value="${esc(m.phone)}" class="field"></div>
+          <div><label class="label" for="upd_email">อีเมล (Email)</label><input type="email" id="upd_email" autocomplete="email" value="${esc(m.email)}" class="field"></div>
         </div>
         <div><label class="label" for="upd_address">ที่อยู่ปัจจุบัน (สำหรับจัดส่งเอกสาร)</label><textarea id="upd_address" rows="2" class="field">${esc(m.address)}</textarea></div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -836,8 +852,8 @@ function submitInfoUpdate() {
   });
 }
 
-function handleFormSubmit(f) {
-  event.preventDefault();
+function handleFormSubmit(f, ev) {
+  (ev || window.event).preventDefault();
 
   const idBachelor = f.querySelector('input[name="idBachelor"]').value.trim();
   const idMaster = f.querySelector('input[name="idMaster"]').value.trim();
