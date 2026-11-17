@@ -387,12 +387,10 @@
         <form id="renewForm" class="space-y-6" onsubmit="event.preventDefault();">
           <section class="card">
             <div class="card-head"><span class="num">1</span><h2 class="font-semibold">ตรวจสอบข้อมูลติดต่อ</h2></div>
-            <div class="card-body space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label class="label" for="renew_phone">เบอร์โทรศัพท์ใหม่</label><input type="tel" id="renew_phone" autocomplete="tel-national" inputmode="numeric" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="field"></div>
-                <div><label class="label" for="renew_email">อีเมลใหม่</label><input type="email" id="renew_email" autocomplete="email" class="field"></div>
-              </div>
-              <div><label class="label" for="renew_address">ที่อยู่ปัจจุบัน (สำหรับจัดส่งบัตร/เอกสาร)</label><textarea id="renew_address" rows="3" class="field"></textarea></div>
+            <div class="card-body space-y-3">
+              <!-- ✅ แสดงแบบปิดบางส่วนเท่านั้น (ค้นหาด้วยเลขบัตรอย่างเดียว) — แก้ไขได้ที่เมนู "ข้อมูลสมาชิก" หลังยืนยันรหัสทางอีเมล -->
+              <dl id="renewContact" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-paper rounded-xl p-4 text-sm"></dl>
+              <p class="text-sm text-muted leading-relaxed">ใบเสร็จรับเงินจะส่งไปที่อีเมลข้างต้น หากข้อมูลไม่ถูกต้อง กรุณา<a href="javascript:void(0)" onclick="event.preventDefault();switchPage('member_info')" class="font-semibold underline underline-offset-2">แก้ไขที่เมนู "ข้อมูลสมาชิก"</a> ก่อนต่ออายุ (ต้องยืนยันตัวตนด้วยรหัสทางอีเมล)</p>
             </div>
           </section>
 
@@ -669,9 +667,9 @@ function searchForRenewOnly() {
             <p class="text-sm text-muted">รหัส ${esc(res.id)} · สถานะ: <span class="font-semibold text-brand-700">${esc(res.status)}</span></p>
           </div>
         </div>`;
-      document.getElementById('renew_phone').value = res.phone || '';
-      document.getElementById('renew_email').value = res.email || '';
-      document.getElementById('renew_address').value = res.address || '';
+      document.getElementById('renewContact').innerHTML = `
+        <div><dt class="text-xs text-muted">เบอร์โทรศัพท์</dt><dd class="font-medium tabular-nums">${esc(res.maskedPhone || '-')}</dd></div>
+        <div><dt class="text-xs text-muted">อีเมล (สำหรับรับใบเสร็จ)</dt><dd class="font-medium">${res.hasEmail ? esc(res.maskedEmail) : '<span class="text-brand-700">ไม่มีอีเมลในระบบ — ติดต่อสมาคมฯ เพื่อรับใบเสร็จ</span>'}</dd></div>`;
       document.getElementById('renewForm').classList.remove('hidden');
       scrollToEl(document.getElementById('renewDisplayArea'));
       if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -682,6 +680,130 @@ function searchForRenewOnly() {
   }).catch(err => {
     Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อระบบได้: ' + err.message, 'error');
   });
+}
+
+// --- ยืนยันตัวตนก่อนแก้ไขข้อมูลส่วนตัว (รหัส 6 หลักทางอีเมลที่อยู่ในระบบ) ---
+// เดิมใครก็ได้ที่รู้เลขบัตร 13 หลัก เห็นและแก้เบอร์โทร/อีเมล/ที่อยู่ของสมาชิกได้
+let editSession = null;     // { editToken, ...profile } หลังยืนยันรหัสสำเร็จ
+let otpCooldownTimer = null;
+
+function renderVerifyStep(m) {
+  const area = document.getElementById('updateInfoFormArea');
+  const contact = [m.maskedPhone ? 'โทร ' + m.maskedPhone : '', m.maskedEmail ? 'อีเมล ' + m.maskedEmail : ''].filter(Boolean).join(' · ');
+  area.innerHTML = `
+    <section class="card">
+      <div class="card-head"><i data-lucide="lock" class="w-5 h-5 text-brand-700" aria-hidden="true"></i><h3 class="font-semibold">ปรับปรุงข้อมูลส่วนตัว</h3></div>
+      <div class="card-body space-y-4">
+        ${contact ? `<p class="text-sm"><span class="text-muted">ข้อมูลติดต่อในระบบ:</span> <span class="font-medium tabular-nums">${esc(contact)}</span></p>` : ''}
+        ${m.hasEmail ? `
+          <div class="rounded-xl bg-paper p-4 text-sm leading-relaxed">
+            <p class="font-semibold flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-emerald-600" aria-hidden="true"></i> ยืนยันตัวตนก่อนแก้ไขข้อมูล</p>
+            <p class="text-muted mt-1">เพื่อป้องกันผู้อื่นแก้ไขข้อมูลของท่าน ระบบจะส่ง<b class="text-ink">รหัส 6 หลัก</b>ไปที่อีเมล <b class="text-ink">${esc(m.maskedEmail)}</b> ที่ท่านลงทะเบียนไว้</p>
+          </div>
+          <div id="otpStep" class="space-y-3">
+            <button type="button" id="btnSendOtp" onclick="requestEditOtp()" class="btn-dark w-full"><i data-lucide="mail" class="w-4 h-4"></i> ส่งรหัสยืนยันทางอีเมล</button>
+          </div>` : `
+          <div class="rounded-xl border border-gold-300 bg-gold-50 p-4 text-sm leading-relaxed">
+            <p class="font-semibold">ไม่มีอีเมลของท่านในระบบ</p>
+            <p class="text-ink/80 mt-1">ระบบจึงยืนยันตัวตนทางออนไลน์ไม่ได้ กรุณาติดต่อสมาคมฯ ทาง <a href="mailto:tu.sw.alumni@gmail.com" class="font-semibold underline">tu.sw.alumni@gmail.com</a> เพื่อแก้ไขข้อมูล</p>
+          </div>`}
+      </div>
+    </section>`;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function requestEditOtp() {
+  if (!currentMemberData) return;
+  const idCard = document.getElementById('infoSearchId').value.trim();
+  const btn = document.getElementById('btnSendOtp');
+  if (btn) { btn.disabled = true; btn.classList.add('opacity-60'); }
+  Swal.fire({ title: 'กำลังส่งรหัสยืนยัน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  TUSW_API.call('requestProfileOtp', { idCard: idCard }).then(res => {
+    Swal.close();
+    if (!res.success) {
+      if (btn) { btn.disabled = false; btn.classList.remove('opacity-60'); }
+      return Swal.fire({ icon: res.noEmail ? 'info' : 'warning', title: 'ส่งรหัสไม่สำเร็จ', text: res.message, confirmButtonColor: '#7d1f22' });
+    }
+    document.getElementById('otpStep').innerHTML = `
+      <p class="text-sm text-emerald-700 flex items-center gap-1.5" role="status"><i data-lucide="check-circle" class="w-4 h-4" aria-hidden="true"></i> ส่งรหัสไปที่ ${esc(res.maskedEmail)} แล้ว (ใช้ได้ ${res.ttlMinutes || 10} นาที) — ตรวจกล่องจดหมายขยะด้วย</p>
+      <div>
+        <label class="label" for="otpCode">รหัสยืนยัน 6 หลัก</label>
+        <div class="flex gap-2">
+          <input id="otpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"
+            oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length===6) verifyEditOtp();"
+            onkeydown="if(event.key==='Enter') verifyEditOtp()" class="field font-mono text-xl tracking-[.5em] text-center flex-grow">
+          <button type="button" onclick="verifyEditOtp()" class="btn-primary flex-shrink-0">ยืนยัน</button>
+        </div>
+      </div>
+      <button type="button" id="btnResendOtp" onclick="requestEditOtp()" disabled class="text-sm font-semibold text-brand-700 underline underline-offset-2 disabled:no-underline disabled:text-muted">ส่งรหัสอีกครั้ง</button>`;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    document.getElementById('otpCode').focus();
+    startOtpCooldown(60);
+  }).catch(err => {
+    if (btn) { btn.disabled = false; btn.classList.remove('opacity-60'); }
+    Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+  });
+}
+
+function startOtpCooldown(sec) {
+  clearInterval(otpCooldownTimer);
+  const b = document.getElementById('btnResendOtp');
+  const tick = () => {
+    if (!b || !document.body.contains(b)) return clearInterval(otpCooldownTimer);
+    if (sec <= 0) { b.disabled = false; b.textContent = 'ส่งรหัสอีกครั้ง'; return clearInterval(otpCooldownTimer); }
+    b.disabled = true; b.textContent = 'ส่งรหัสอีกครั้งได้ใน ' + sec-- + ' วินาที';
+  };
+  tick(); otpCooldownTimer = setInterval(tick, 1000);
+}
+
+function verifyEditOtp() {
+  const input = document.getElementById('otpCode');
+  const code = input ? input.value.trim() : '';
+  if (code.length !== 6) return Swal.fire('เตือน', 'กรุณากรอกรหัส 6 หลักที่ได้รับทางอีเมล', 'warning');
+  if (input.dataset.busy) return;
+  input.dataset.busy = '1';
+  Swal.fire({ title: 'กำลังตรวจสอบรหัส...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  TUSW_API.call('verifyProfileOtp', { idCard: document.getElementById('infoSearchId').value.trim(), code: code }).then(res => {
+    delete input.dataset.busy;
+    if (!res.success) {
+      input.value = '';
+      Swal.fire({ icon: 'error', title: 'ยืนยันไม่สำเร็จ', text: res.message, confirmButtonColor: '#7d1f22' }).then(() => {
+        if (res.expired) renderVerifyStep(currentMemberData); else input.focus();
+      });
+      return;
+    }
+    Swal.close();
+    editSession = res;
+    renderEditForm(res);
+  }).catch(err => { delete input.dataset.busy; Swal.fire('เกิดข้อผิดพลาด', err.message, 'error'); });
+}
+
+function renderEditForm(m) {
+  document.getElementById('updateInfoFormArea').innerHTML = `
+    <section class="card">
+      <div class="card-head"><i data-lucide="user-cog" class="w-5 h-5 text-brand-700"></i><h3 class="font-semibold">ปรับปรุงข้อมูลส่วนตัว</h3>
+        <span class="chip bg-emerald-50 text-emerald-700 ml-auto"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> ยืนยันตัวตนแล้ว</span></div>
+      <div class="card-body space-y-4">
+        <p class="text-xs text-muted">กรุณาบันทึกภายใน ${m.editMinutes || 20} นาที หลังจากนั้นต้องขอรหัสยืนยันใหม่</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="label" for="upd_phone">เบอร์โทรศัพท์</label><input type="tel" id="upd_phone" inputmode="numeric" autocomplete="tel-national" value="${esc(m.phone)}" class="field"></div>
+          <div><label class="label" for="upd_email">อีเมล (Email)</label><input type="email" id="upd_email" autocomplete="email" value="${esc(m.email)}" class="field"></div>
+        </div>
+        <div><label class="label" for="upd_address">ที่อยู่ปัจจุบัน (สำหรับจัดส่งเอกสาร)</label><textarea id="upd_address" rows="2" class="field">${esc(m.address)}</textarea></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><label class="label" for="upd_job">อาชีพ</label><input type="text" id="upd_job" value="${esc(m.job)}" class="field"></div>
+          <div><label class="label" for="upd_position">ตำแหน่ง</label><input type="text" id="upd_position" value="${esc(m.position)}" class="field"></div>
+          <div><label class="label" for="upd_workplace">สถานที่ทำงาน</label><input type="text" id="upd_workplace" value="${esc(m.workplace)}" class="field"></div>
+        </div>
+        <label for="pdpaConsentInfo" class="flex items-start gap-3 bg-paper rounded-xl p-4 cursor-pointer text-sm">
+          <input id="pdpaConsentInfo" type="checkbox" class="mt-0.5 w-5 h-5 accent-[#7d1f22] flex-shrink-0">
+          <span class="text-ink/90 leading-relaxed">ข้าพเจ้าได้อ่านและยอมรับ <a href="javascript:void(0)" onclick="event.preventDefault();showPrivacyPolicy()" class="font-semibold underline underline-offset-2">นโยบายความเป็นส่วนตัว</a> และยินยอมให้สมาคมฯ เก็บรวบรวม ใช้ และประมวลผลข้อมูลส่วนบุคคลของข้าพเจ้า เพื่อใช้ในการจัดการฐานข้อมูลสมาชิกและการออกบัตรสมาชิกตามที่ระบุไว้</span>
+        </label>
+        <button onclick="submitInfoUpdate()" class="btn-dark w-full"><i data-lucide="save" class="w-4 h-4"></i> บันทึกการเปลี่ยนแปลง</button>
+      </div>
+    </section>`;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  scrollToEl(document.getElementById('updateInfoFormArea'));
 }
 
 // --- Info card + edit form ---
@@ -710,27 +832,8 @@ function renderInfoForm(m) {
       </dl>
     </div>`;
 
-  document.getElementById('updateInfoFormArea').innerHTML = `
-    <section class="card">
-      <div class="card-head"><i data-lucide="user-cog" class="w-5 h-5 text-brand-700"></i><h3 class="font-semibold">ปรับปรุงข้อมูลส่วนตัว</h3></div>
-      <div class="card-body space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="label" for="upd_phone">เบอร์โทรศัพท์</label><input type="tel" id="upd_phone" inputmode="numeric" autocomplete="tel-national" value="${esc(m.phone)}" class="field"></div>
-          <div><label class="label" for="upd_email">อีเมล (Email)</label><input type="email" id="upd_email" autocomplete="email" value="${esc(m.email)}" class="field"></div>
-        </div>
-        <div><label class="label" for="upd_address">ที่อยู่ปัจจุบัน (สำหรับจัดส่งเอกสาร)</label><textarea id="upd_address" rows="2" class="field">${esc(m.address)}</textarea></div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div><label class="label" for="upd_job">อาชีพ</label><input type="text" id="upd_job" value="${esc(m.job)}" class="field"></div>
-          <div><label class="label" for="upd_position">ตำแหน่ง</label><input type="text" id="upd_position" value="${esc(m.position)}" class="field"></div>
-          <div><label class="label" for="upd_workplace">สถานที่ทำงาน</label><input type="text" id="upd_workplace" value="${esc(m.workplace)}" class="field"></div>
-        </div>
-        <label for="pdpaConsentInfo" class="flex items-start gap-3 bg-paper rounded-xl p-4 cursor-pointer text-sm">
-          <input id="pdpaConsentInfo" type="checkbox" class="mt-0.5 w-5 h-5 accent-[#7d1f22] flex-shrink-0">
-          <span class="text-ink/90 leading-relaxed">ข้าพเจ้าได้อ่านและยอมรับ <a href="javascript:void(0)" onclick="event.preventDefault();showPrivacyPolicy()" class="font-semibold underline underline-offset-2">นโยบายความเป็นส่วนตัว</a> และยินยอมให้สมาคมฯ เก็บรวบรวม ใช้ และประมวลผลข้อมูลส่วนบุคคลของข้าพเจ้า เพื่อใช้ในการจัดการฐานข้อมูลสมาชิกและการออกบัตรสมาชิกตามที่ระบุไว้</span>
-        </label>
-        <button onclick="submitInfoUpdate()" class="btn-dark w-full"><i data-lucide="save" class="w-4 h-4"></i> บันทึกการเปลี่ยนแปลง</button>
-      </div>
-    </section>`;
+  editSession = null;
+  renderVerifyStep(m);
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
   drawInfoCard(m);
@@ -816,7 +919,7 @@ function downloadInfoCard() {
 
 // --- Form submissions ---
 function submitInfoUpdate() {
-  if (!currentMemberData) return;
+  if (!currentMemberData || !editSession) return renderVerifyStep(currentMemberData);
   const consent = document.getElementById('pdpaConsentInfo');
   if (consent && !consent.checked) {
     return Swal.fire({ icon: 'warning', title: 'กรุณายอมรับเงื่อนไข', text: 'โปรดทำเครื่องหมายถูกที่ช่องยอมรับนโยบายความเป็นส่วนตัวก่อนกดบันทึกข้อมูล', confirmButtonColor: '#7d1f22' });
@@ -833,7 +936,8 @@ function submitInfoUpdate() {
     job: document.getElementById('upd_job').value,
     position: document.getElementById('upd_position').value,
     workplace: document.getElementById('upd_workplace').value,
-    slip: null
+    slip: null,
+    editToken: editSession.editToken
   };
 
   Swal.fire({
@@ -845,6 +949,10 @@ function submitInfoUpdate() {
     TUSW_API.call('updateMemberProfile', data).then(res => {
       if (res.success) {
         Swal.fire({ icon: 'success', title: 'เรียบร้อย', text: 'ข้อมูลของท่านได้รับการปรับปรุงแล้ว', confirmButtonColor: '#221c18' });
+      } else if (/ยืนยันตัวตน/.test(res.message || '')) {
+        // หมดเวลาแก้ไข → กลับไปขั้นยืนยันรหัส
+        editSession = null;
+        Swal.fire({ icon: 'warning', title: 'หมดเวลาแก้ไข', text: res.message, confirmButtonColor: '#7d1f22' }).then(() => renderVerifyStep(currentMemberData));
       } else {
         Swal.fire('ผิดพลาด', res.message, 'error');
       }
@@ -1031,13 +1139,7 @@ function submitRenewal() {
       rowId: selectedMemberForRenew.rowId,
       id: selectedMemberForRenew.id,
       name: selectedMemberForRenew.name,
-      phone: document.getElementById('renew_phone').value,
-      email: document.getElementById('renew_email').value,
-      address: document.getElementById('renew_address').value,
-      // คงข้อมูลอาชีพ/ตำแหน่ง/ที่ทำงานเดิมไว้ (เดิมส่ง "สมาชิกสมทบ" / "-" / "-" ทับข้อมูลจริงทุกครั้งที่ต่ออายุ)
-      job: selectedMemberForRenew.job || "สมาชิกสมทบ",
-      position: selectedMemberForRenew.position || "-",
-      workplace: selectedMemberForRenew.workplace || "-",
+      // ✅ ต่ออายุไม่แก้ข้อมูลติดต่อ (ระบบใช้ข้อมูลเดิมในชีต) — แก้ข้อมูลได้ที่เมนู "ข้อมูลสมาชิก" หลังยืนยันตัวตน
       slip: e.target.result
     }).then(res => {
       if (res.success && res.pending) {
