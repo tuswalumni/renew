@@ -839,6 +839,16 @@ function renderInfoForm(m) {
   drawInfoCard(m);
 }
 
+// ✅ รอฟอนต์ Sarabun "ชุดอักษรไทย" ก่อนวาดบัตร — Google Fonts แยกไฟล์ฟอนต์ไทย/อังกฤษ
+// เดิมใช้ document.fonts.load('bold 22px Sarabun') ซึ่งโหลดแค่ชุดอังกฤษ บางครั้งอักษรไทยบนบัตรจึงเป็นฟอนต์สำรอง
+// (ตัวหนังสือกว้างกว่า ชื่อสมาคมวิ่งทับโลโก้) — ใส่ข้อความไทยตัวอย่างเพื่อบังคับโหลดชุดไทย, รอไม่เกิน 3 วินาที
+function loadCardFonts() {
+  if (!document.fonts || !document.fonts.load) return Promise.resolve();
+  const sample = 'สมาคมนักศึกษาเก่าสังคมสงเคราะห์ศาสตร์ มธ. ABC 0123';
+  const loads = Promise.all(['bold 22px Sarabun', '22px Sarabun'].map(f => document.fonts.load(f, sample))).catch(() => {});
+  return Promise.race([loads, new Promise(r => setTimeout(r, 3000))]);
+}
+
 function drawInfoCard(m) {
   const canvas = document.getElementById('infoMemberCardCanvas');
   if (!canvas) return;
@@ -901,10 +911,7 @@ function drawInfoCard(m) {
       logo.src = m.logoBase64;
     }
   };
-  // รอฟอนต์ Sarabun โหลดก่อนวาด (กันตัวอักษรบนบัตรเป็นฟอนต์สำรอง)
-  if (document.fonts && document.fonts.load) {
-    Promise.all([document.fonts.load('bold 22px Sarabun'), document.fonts.load('38px Sarabun')]).then(draw, draw);
-  } else draw();
+  loadCardFonts().then(draw);
 }
 
 function downloadInfoCard() {
